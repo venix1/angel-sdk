@@ -39,6 +39,7 @@ import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.ScaleAnimation;
 import android.view.animation.TranslateAnimation;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -47,12 +48,15 @@ import com.angel.sdk.BleDevice;
 import com.angel.sdk.ChAccelerationEnergyMagnitude;
 import com.angel.sdk.ChAccelerationWaveform;
 import com.angel.sdk.ChBatteryLevel;
+import com.angel.sdk.ChHealthJournalControlPoint;
+import com.angel.sdk.ChHealthJournalEntry;
 import com.angel.sdk.ChHeartRateMeasurement;
 import com.angel.sdk.ChOpticalWaveform;
 import com.angel.sdk.ChStepCount;
 import com.angel.sdk.ChTemperatureMeasurement;
 import com.angel.sdk.SrvActivityMonitoring;
 import com.angel.sdk.SrvBattery;
+import com.angel.sdk.SrvHealthJournal;
 import com.angel.sdk.SrvHealthThermometer;
 import com.angel.sdk.SrvHeartRate;
 import com.angel.sdk.SrvWaveformSignal;
@@ -68,6 +72,17 @@ public class HomeActivity extends Activity {
         orientation = getResources().getConfiguration().orientation;
 
         mHandler = new Handler(this.getMainLooper());
+
+        final Button button = (Button) findViewById(R.id.journal_entry);
+        button.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                if (mBleDevice.getService((SrvHealthJournal.class)) != null) {
+                    ChHealthJournalControlPoint cp = mBleDevice.getService(SrvHealthJournal.class).getHealthJournalControlPoint();
+                    cp.query(ChHealthJournalControlPoint.Operator.First);
+                }
+            }
+        });
+
 
         mPeriodicReader = new Runnable() {
             @Override
@@ -149,6 +164,7 @@ public class HomeActivity extends Activity {
         mBleDevice = new BleDevice(this, mDeviceLifecycleCallback, mHandler);
 
         try {
+            mBleDevice.registerServiceClass(SrvHealthJournal.class);
             mBleDevice.registerServiceClass(SrvHeartRate.class);
             mBleDevice.registerServiceClass(SrvHealthThermometer.class);
             mBleDevice.registerServiceClass(SrvBattery.class);
@@ -196,6 +212,8 @@ public class HomeActivity extends Activity {
     private final BleDevice.LifecycleCallback mDeviceLifecycleCallback = new BleDevice.LifecycleCallback() {
         @Override
         public void onBluetoothServicesDiscovered(BleDevice device) {
+            device.getService(SrvHealthJournal.class).getHealthJournalEntry().enableNotifications(mHealthJournalListener);
+            device.getService(SrvHealthJournal.class).getHealthJournalControlPoint().enableNotifications(mHealthJournalControlPointListener);
             device.getService(SrvHeartRate.class).getHeartRateMeasurement().enableNotifications(mHeartRateListener);
             device.getService(SrvHealthThermometer.class).getTemperatureMeasurement().enableNotifications(mTemperatureListener);
             device.getService(SrvBattery.class).getBatteryLevel().enableNotifications(mBatteryLevelListener);
@@ -239,6 +257,20 @@ public class HomeActivity extends Activity {
                     mGreenOpticalWaveformView.addValue(item.green);
                     mBlueOpticalWaveformView.addValue(item.blue);
                 }
+        }
+    };
+
+    private final BleCharacteristic.ValueReadyCallback<ChHealthJournalControlPoint.HealthJournalControlPointValue> mHealthJournalControlPointListener = new BleCharacteristic.ValueReadyCallback<ChHealthJournalControlPoint.HealthJournalControlPointValue>() {
+        @Override
+        public void onValueReady(final ChHealthJournalControlPoint.HealthJournalControlPointValue hjEntry) {
+            System.out.println("Health Journal Control Point");
+        }
+    };
+
+    private final BleCharacteristic.ValueReadyCallback<ChHealthJournalEntry.HealthJournalEntryValue> mHealthJournalListener = new BleCharacteristic.ValueReadyCallback<ChHealthJournalEntry.HealthJournalEntryValue>() {
+        @Override
+        public void onValueReady(final ChHealthJournalEntry.HealthJournalEntryValue hjEntry) {
+            System.out.println("Health Journal Entry");
         }
     };
 

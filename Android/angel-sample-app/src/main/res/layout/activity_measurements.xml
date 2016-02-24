@@ -15,6 +15,12 @@
         android:background="@android:color/black"
         android:gravity="center_vertical|right">
 
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Journal Entry"
+            android:id="@+id/journal_entry" />
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
