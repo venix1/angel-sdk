@@ -382,12 +382,19 @@ public class BleDevice {
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt,
                                             BluetoothGattCharacteristic characteristic) {
+            Log.d(TAG, String.format("onCharacteristicChanged: %s", characteristic.getUuid()));
+
             String serviceUuid = characteristic.getService().getUuid().toString();
             if (serviceUuid == null) throw new AssertionError();
 
             String charcteristicUuid = characteristic.getUuid().toString();
             if (charcteristicUuid == null) throw new AssertionError();
             handleOnCharacteristicChanged(serviceUuid, charcteristicUuid);
+        }
+
+        @Override
+        public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
+            Log.d(TAG, String.format("onCharacteristicWrite: %s 0x%02x", characteristic.getUuid(), status));
         }
 
         @Override
